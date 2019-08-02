@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Music Radio App</string>
+    <string name="text_stream_playing">Играет поток</string>
+    <string name="text_music_theme">Музыка для баров и ресторанов</string>
+    <string name="text_song_name">Solitary Refinement</string>
+    <string name="text_band_name">Neil Cowley, Ben Lukas Boysen</string>
+    <string name="text_history_tracks">ИСТОРИЯ ПРОИГРЫВАНИЯ</string>
+</resources>
