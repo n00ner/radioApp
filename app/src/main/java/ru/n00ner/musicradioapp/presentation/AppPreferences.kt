@@ -17,6 +17,20 @@ class AppPreferences(context: Context) {
         get() = Gson().fromJson(preferences.getString(DELETED_TRACKS, "[]"), object : TypeToken<ArrayList<Int>?>() {}.type)
         set(value) = preferences.edit().putString(DELETED_TRACKS, Gson().toJson(value)).apply()
 
+    fun addDeletedTrack(trackId: Int){
+        val tracks = deletedTracks
+        tracks?.add(trackId)
+        deletedTracks = tracks
+    }
+
+    fun isTrackDeleted(id: Int): Boolean{
+        return if (deletedTracks.isNullOrEmpty()) {
+            false
+        } else {
+            deletedTracks!!.contains(id)
+        }
+    }
+
 
 
 

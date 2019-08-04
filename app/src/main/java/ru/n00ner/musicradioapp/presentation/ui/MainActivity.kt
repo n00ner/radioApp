@@ -15,6 +15,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import ru.n00ner.musicradioapp.R
 import ru.n00ner.musicradioapp.di.KodeinContainers
+import ru.n00ner.musicradioapp.domain.usecase.SendDislikeUseCase
+import ru.n00ner.musicradioapp.presentation.AppPreferences
 import ru.n00ner.musicradioapp.presentation.model.CurrentTrackUI
 import ru.n00ner.musicradioapp.presentation.model.TrackUI
 import ru.n00ner.musicradioapp.presentation.ui.adapters.TracksAdapter
@@ -56,6 +58,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onRadioStopped() {
                 runOnUiThread {
+                    img_eq.setImageResource(R.drawable.ic_equalizer)
                     btn_radio.setImageResource(R.drawable.ic_play_arrow)
                     btn_radio.setOnClickListener{
                         radioService.startRadio(streamUrl)
@@ -66,6 +69,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onRadioStarted() {
                 runOnUiThread {
+                    img_eq.setImageResource(R.drawable.ic_active_equalizer)
                     btn_radio.setImageResource(R.drawable.ic_pause)
                     btn_radio.setOnClickListener{
                         radioService.stopRadio()
@@ -85,7 +89,7 @@ class MainActivity : AppCompatActivity() {
             TrackHistoryViewModel(instance())
         }
         trackOnAirViewModel = KodeinContainers.diBaseProject.newInstance {
-            CurrentTrackViewModel(instance(), instance())
+            CurrentTrackViewModel(instance(), instance(), instance())
         }
     }
 
@@ -98,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         trackOnAirViewModel.trackOnAir.observe(this, Observer(::updateCurrentTrack))
         trackOnAirViewModel.title.observe(this,Observer(::updateTitle))
         trackOnAirViewModel.poster.observe(this, Observer(::updatePoster))
+        trackOnAirViewModel.isDisliked.observe(this,Observer(::updateCurrentTrackDislikeBtn) )
     }
 
     private fun onTracksReceived(tracks: List<TrackUI>) {
@@ -105,9 +110,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showTracks(tracksUI: List<TrackUI>?) {
+        val prefs = KodeinContainers.diBaseProject.newInstance {
+            AppPreferences(instance())
+        }
+        val dislikeUseCase = KodeinContainers.diBaseProject.newInstance {
+            SendDislikeUseCase(instance(), instance())
+        }
         tracksUI?.let {
             list_track_history.layoutManager = LinearLayoutManager(this)
-            val tracksAdapter = TracksAdapter(it.toMutableList(), viewModel, this)
+            val tracksAdapter = TracksAdapter(it.toMutableList(),prefs, dislikeUseCase )
             list_track_history.adapter = tracksAdapter
             tracksAdapter.updateAdapter(it.toMutableList())
             list_track_history.setHasFixedSize(true)
@@ -143,6 +154,9 @@ class MainActivity : AppCompatActivity() {
     private fun updateCurrentTrack(track: CurrentTrackUI){
         tv_track_title.text = track.title
         tv_track_performer.text = track.performerTitle
+        btn_cur_track_dislike.setOnClickListener {
+            trackOnAirViewModel.handleCurrentTrackDislike(track.id)
+        }
     }
 
     private fun updatePoster(url: String?){
@@ -151,6 +165,16 @@ class MainActivity : AppCompatActivity() {
             .placeholder(R.drawable.photo)
             .override(200, 300)
             .into(stream_poster)
+    }
+
+    private fun updateCurrentTrackDislikeBtn(isUnlike: Boolean){
+        if(isUnlike){
+            btn_cur_track_dislike.alpha = 1.0f
+            btn_cur_track_dislike.setOnClickListener(null)
+            Toast.makeText(this, "Трек отмечен как нежелательный!", Toast.LENGTH_SHORT).show()
+        }else{
+            Toast.makeText(this, "Не удалось отправить запрос!", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateTitle(title: String?){

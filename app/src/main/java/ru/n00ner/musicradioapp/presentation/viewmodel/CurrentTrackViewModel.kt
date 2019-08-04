@@ -9,18 +9,20 @@ import ru.n00ner.musicradioapp.domain.model.CurrentTrack
 import ru.n00ner.musicradioapp.domain.model.Stream
 import ru.n00ner.musicradioapp.domain.usecase.GetCurrentTrackUseCase
 import ru.n00ner.musicradioapp.domain.usecase.GetStreamUseCase
+import ru.n00ner.musicradioapp.domain.usecase.SendDislikeUseCase
 import ru.n00ner.musicradioapp.presentation.model.CurrentTrackUI
 import ru.n00ner.musicradioapp.presentation.viewmodel.mapper.CurrentTrackMapper
 import ru.n00ner.musicradioapp.utils.dto.Response
 import ru.n00ner.musicradioapp.utils.dto.ResponseType
 
-class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackUseCase, private val getStreamUseCase: GetStreamUseCase) : ViewModel() {
+class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackUseCase, private val getStreamUseCase: GetStreamUseCase, private val sendDislikeUseCase: SendDislikeUseCase) : ViewModel() {
     
     private val isErrorLiveData: MutableLiveData<Boolean> = MutableLiveData()
     private val trackOnAirLiveData: MutableLiveData<CurrentTrackUI> = MutableLiveData()
     private val streamUrl: MutableLiveData<String> = MutableLiveData()
     private val streamTitle: MutableLiveData<String> = MutableLiveData()
     private val streamPoster: MutableLiveData<String> = MutableLiveData()
+    private val dislike: MutableLiveData<Boolean> = MutableLiveData()
 
 
     private var timer: CountDownTimer? = null
@@ -30,6 +32,9 @@ class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackU
 
     val isError: MutableLiveData<Boolean>
         get() = isErrorLiveData
+
+    val isDisliked: MutableLiveData<Boolean>
+        get() = dislike
 
     val stream: MutableLiveData<String>
         get() = streamUrl
@@ -45,12 +50,21 @@ class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackU
         startTimer()
     }
 
-    public fun handleTracksLoad() {
+    fun handleTracksLoad() {
         viewModelScope.launch {
             updateStream(getStreamUseCase.execute().data)
             updateAppropriateLiveData(
                 getCurrentTrackUseCase.execute()
             )
+        }
+    }
+
+    fun handleCurrentTrackDislike(trackId: Int){
+        viewModelScope.launch {
+            if(sendDislikeUseCase.execute(trackId).ResponseType != ResponseType.ERROR)
+                isDisliked.postValue(true)
+            else
+                isDisliked.postValue(false)
         }
     }
 

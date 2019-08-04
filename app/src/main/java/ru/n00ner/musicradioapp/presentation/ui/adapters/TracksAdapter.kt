@@ -11,12 +11,18 @@ import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_track.view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import ru.n00ner.musicradioapp.R
+import ru.n00ner.musicradioapp.domain.usecase.SendDislikeUseCase
 import ru.n00ner.musicradioapp.presentation.AppPreferences
 import ru.n00ner.musicradioapp.presentation.model.TrackUI
 import ru.n00ner.musicradioapp.presentation.viewmodel.TrackHistoryViewModel
+import ru.n00ner.musicradioapp.utils.BaseApp
+import ru.n00ner.musicradioapp.utils.dto.ResponseType
 
-class TracksAdapter(private var tracks: MutableList<TrackUI>, private var viewmodel: TrackHistoryViewModel, private var context: Context) :
+class TracksAdapter(private var tracks: MutableList<TrackUI>, private val prefs: AppPreferences, private val sendDislikeUseCase: SendDislikeUseCase) :
     RecyclerView.Adapter<ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
@@ -32,9 +38,24 @@ class TracksAdapter(private var tracks: MutableList<TrackUI>, private var viewmo
             trackTitleTextView.text = tracks[position].title
             trackOnAirTextView.text = tracks[position].onAir
             trackPerformerTextView.text = tracks[position].performerTitle
-            trackDislikeButton.setOnClickListener {
-                viewmodel.onDislikeClicked(tracks[position].mediafile)
-                Toast.makeText(trackDislikeButton.context, "Трек отмечен как нежелательный", Toast.LENGTH_SHORT).show()
+            val deletedList = prefs.deletedTracks
+            deletedList?.forEach {
+                if(tracks[position].mediafile == it){
+                    trackDislikeButton.alpha = 1.0f
+                    trackDislikeButton.setOnClickListener(null)
+                }else{
+                    trackDislikeButton.alpha = 0.4f
+                    trackDislikeButton.setOnClickListener{
+                        GlobalScope.launch(Dispatchers.Main) {
+                            if(sendDislikeUseCase.execute(tracks[position].mediafile).ResponseType != ResponseType.ERROR){
+                                notifyDataSetChanged()
+                                Toast.makeText(BaseApp.applicationContext(), "Трек отмечен как нежелательный", Toast.LENGTH_SHORT).show()
+                            }else{
+                                Toast.makeText(BaseApp.applicationContext(), "Не удалось отправить запрос!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
             }
         }
     }
