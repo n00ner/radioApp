@@ -16,15 +16,5 @@ class GetCurrentTrackUseCase (private val networkRepository: NetworkRepository) 
         return Response.error("Track is null")
     }
 
-    suspend fun sendDislike(trackId: Int): Response<Stream>{
-        return networkRepository.dislikeTrack(trackId)
-    }
 
-    suspend fun getCurrentStream(): Response<Stream> {
-        val stream = networkRepository.getStream()
-        if(stream.ResponseType == ResponseType.SUCCESS){
-            return stream
-        }
-        return Response.error("Stream is null")
-    }
 }

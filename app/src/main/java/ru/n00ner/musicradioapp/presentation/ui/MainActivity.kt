@@ -8,6 +8,7 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import co.mobiwise.library.RadioListener
 import co.mobiwise.library.RadioManager
+import com.bumptech.glide.Glide
 import com.github.salomonbrys.kodein.instance
 import com.github.salomonbrys.kodein.newInstance
 import kotlinx.android.synthetic.main.activity_main.*
@@ -84,7 +85,7 @@ class MainActivity : AppCompatActivity() {
             TrackHistoryViewModel(instance())
         }
         trackOnAirViewModel = KodeinContainers.diBaseProject.newInstance {
-            CurrentTrackViewModel(instance())
+            CurrentTrackViewModel(instance(), instance())
         }
     }
 
@@ -95,6 +96,8 @@ class MainActivity : AppCompatActivity() {
         viewModel.areEmptyTracks.observe(this, Observer { onEmptyTracksReceived() })
         viewModel.isLoading.observe(this, Observer(::onLoadingStateReceived))
         trackOnAirViewModel.trackOnAir.observe(this, Observer(::updateCurrentTrack))
+        trackOnAirViewModel.title.observe(this,Observer(::updateTitle))
+        trackOnAirViewModel.poster.observe(this, Observer(::updatePoster))
     }
 
     private fun onTracksReceived(tracks: List<TrackUI>) {
@@ -140,6 +143,19 @@ class MainActivity : AppCompatActivity() {
     private fun updateCurrentTrack(track: CurrentTrackUI){
         tv_track_title.text = track.title
         tv_track_performer.text = track.performerTitle
+    }
+
+    private fun updatePoster(url: String?){
+        Glide.with(this)
+            .load(url)
+            .placeholder(R.drawable.photo)
+            .override(200, 300)
+            .into(stream_poster)
+    }
+
+    private fun updateTitle(title: String?){
+        if(!title.isNullOrEmpty())
+            stream_title.text = title
     }
 
     override fun onResume() {

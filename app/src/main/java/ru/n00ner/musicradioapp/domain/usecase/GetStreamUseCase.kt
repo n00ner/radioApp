@@ -10,7 +10,7 @@ class GetStreamUseCase (private val networkRepository: NetworkRepository) {
     suspend fun execute(): Response<Stream> {
         val stream = networkRepository.getStream()
         if(stream.ResponseType == ResponseType.SUCCESS){
-            return stream
+            return Response.success(Stream(stream.data!!.id, stream.data.title,"https://f.muz-lab.ru/" + stream.data.image, stream.data.stream))
         }
         return Response.error("Stream is null")
     }

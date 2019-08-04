@@ -6,20 +6,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import ru.n00ner.musicradioapp.domain.model.CurrentTrack
-import ru.n00ner.musicradioapp.domain.model.Track
+import ru.n00ner.musicradioapp.domain.model.Stream
 import ru.n00ner.musicradioapp.domain.usecase.GetCurrentTrackUseCase
+import ru.n00ner.musicradioapp.domain.usecase.GetStreamUseCase
 import ru.n00ner.musicradioapp.presentation.model.CurrentTrackUI
-import ru.n00ner.musicradioapp.presentation.model.TrackUI
 import ru.n00ner.musicradioapp.presentation.viewmodel.mapper.CurrentTrackMapper
-import ru.n00ner.musicradioapp.presentation.viewmodel.mapper.TrackHistoryMapper
 import ru.n00ner.musicradioapp.utils.dto.Response
 import ru.n00ner.musicradioapp.utils.dto.ResponseType
 
-class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackUseCase) : ViewModel() {
+class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackUseCase, private val getStreamUseCase: GetStreamUseCase) : ViewModel() {
     
     private val isErrorLiveData: MutableLiveData<Boolean> = MutableLiveData()
     private val trackOnAirLiveData: MutableLiveData<CurrentTrackUI> = MutableLiveData()
     private val streamUrl: MutableLiveData<String> = MutableLiveData()
+    private val streamTitle: MutableLiveData<String> = MutableLiveData()
+    private val streamPoster: MutableLiveData<String> = MutableLiveData()
+
+
     private var timer: CountDownTimer? = null
 
     val trackOnAir: MutableLiveData<CurrentTrackUI>
@@ -31,6 +34,12 @@ class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackU
     val stream: MutableLiveData<String>
         get() = streamUrl
 
+    val poster: MutableLiveData<String>
+        get() = streamPoster
+
+    val title: MutableLiveData<String>
+        get() = streamTitle
+
     init {
         handleTracksLoad()
         startTimer()
@@ -38,7 +47,7 @@ class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackU
 
     public fun handleTracksLoad() {
         viewModelScope.launch {
-            updateStreamUrl(getCurrentTrackUseCase.getCurrentStream().data?.stream)
+            updateStream(getStreamUseCase.execute().data)
             updateAppropriateLiveData(
                 getCurrentTrackUseCase.execute()
             )
@@ -53,9 +62,11 @@ class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackU
         }
     }
 
-    private fun updateStreamUrl(url: String?){
-        if(!url.isNullOrEmpty()){
-            streamUrl.postValue(url)
+    private fun updateStream(stream: Stream?){
+        if(stream != null){
+            streamUrl.postValue(stream.stream)
+            poster.postValue(stream.image)
+            title.postValue(stream.title)
         }
     }
 
@@ -88,9 +99,5 @@ class CurrentTrackViewModel(private val getCurrentTrackUseCase: GetCurrentTrackU
     private fun stopTimer(){
         if(timer != null)
             timer?.cancel()
-    }
-
-    private fun onDislikeClicked(trackId: Int){
-
     }
 }
