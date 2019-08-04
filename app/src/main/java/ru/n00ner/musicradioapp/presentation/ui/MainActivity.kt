@@ -122,7 +122,7 @@ class MainActivity : AppCompatActivity() {
     private fun updateStreamUrl(url: String){
         streamUrl = url
         btn_radio.setImageResource(R.drawable.ic_play_arrow)
-        imageView2.setOnClickListener {
+        btn_radio.setOnClickListener {
             radioService.startRadio(streamUrl)
         }
     }

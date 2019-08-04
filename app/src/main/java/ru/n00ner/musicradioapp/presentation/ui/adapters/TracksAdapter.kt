@@ -19,8 +19,6 @@ import ru.n00ner.musicradioapp.presentation.viewmodel.TrackHistoryViewModel
 class TracksAdapter(private var tracks: MutableList<TrackUI>, private var viewmodel: TrackHistoryViewModel, private var context: Context) :
     RecyclerView.Adapter<ViewHolder>() {
 
-    private val prefs: AppPreferences? = AppPreferences(context)
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
         ViewHolder(
             LayoutInflater.from(parent.context).inflate(R.layout.item_track, parent, false)
@@ -36,11 +34,7 @@ class TracksAdapter(private var tracks: MutableList<TrackUI>, private var viewmo
             trackPerformerTextView.text = tracks[position].performerTitle
             trackDislikeButton.setOnClickListener {
                 viewmodel.onDislikeClicked(tracks[position].mediafile)
-                removeAt(position)
-                val removedTracks = prefs?.deletedTracks
-                removedTracks?.add(tracks[position].mediafile)
-                prefs?.deletedTracks = removedTracks
-                Toast.makeText(trackDislikeButton.context, "Трек удален!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(trackDislikeButton.context, "Трек отмечен как нежелательный", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -53,17 +47,9 @@ class TracksAdapter(private var tracks: MutableList<TrackUI>, private var viewmo
 
 
     fun updateAdapter(updatedList: List<TrackUI>) {
-        val cleanList = ArrayList<TrackUI>()
         val result = DiffUtil.calculateDiff(TracksDiffCallback(this.tracks, updatedList))
         this.tracks = updatedList.toMutableList()
         result.dispatchUpdatesTo(this)
-        prefs?.deletedTracks?.forEach {
-           this.tracks.forEach{
-               track->
-               if(track.mediafile == it)
-                   removeAt(this.tracks.indexOf(track))
-           }
-        }
     }
 }
 

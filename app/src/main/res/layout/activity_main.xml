@@ -35,6 +35,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
+                    android:padding="8dp"
                     android:layout_alignParentEnd="true"
                     android:layout_marginEnd="21dp"
                     app:srcCompat="@drawable/ic_play_arrow" android:id="@+id/btn_radio"/>
